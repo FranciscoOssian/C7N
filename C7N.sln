@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "C7N.Engine", "C7N.Engine\C7N.Engine.csproj", "{4D02CBBC-EA06-4470-B0D6-C1A419829B4C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "C7N.Api", "C7N.Api\C7N.Api.csproj", "{DCCDED87-CA74-4F80-8E80-0C55641B2A29}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4D02CBBC-EA06-4470-B0D6-C1A419829B4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D02CBBC-EA06-4470-B0D6-C1A419829B4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D02CBBC-EA06-4470-B0D6-C1A419829B4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D02CBBC-EA06-4470-B0D6-C1A419829B4C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCCDED87-CA74-4F80-8E80-0C55641B2A29}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCCDED87-CA74-4F80-8E80-0C55641B2A29}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCCDED87-CA74-4F80-8E80-0C55641B2A29}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCCDED87-CA74-4F80-8E80-0C55641B2A29}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

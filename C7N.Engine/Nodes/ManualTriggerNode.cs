@@ -1,6 +1,6 @@
 namespace C7N.Engine.Nodes;
 
-public class ManualTriggerNode(string id, string name) : WorkflowNode(id, name, "manual-trigger")
+public class ManualTriggerNode(string id, string name, Dictionary<string, object> parameters) : WorkflowNode(id, name, "manual-trigger", parameters)
 {
     public override Task Execute()
     {

@@ -18,8 +18,8 @@ var workflows = new List<Workflow>();
 
 app.MapPost("/workflows", (Workflow workflow) =>
 {
-    var akreadyExists = workflows.Any(w => w.Id == workflow.Id);
-    if (akreadyExists)
+    var alreadyExists = workflows.Any(w => w.Id == workflow.Id);
+    if (alreadyExists)
     {
         return Results.Conflict($"Workflow {workflow.Id} already exists");
     }

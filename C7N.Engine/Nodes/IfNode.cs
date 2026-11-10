@@ -1,11 +1,29 @@
+using System.Text.Json.Serialization;
+
 namespace C7N.Engine.Nodes;
 
-public class IfNode(string id, string name, Dictionary<string, object> parameters) : WorkflowNode(id, name, "if", parameters)
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum IfComparisonOperator
 {
-    public override Task Execute()
+    Equals,
+    NotEquals,
+    GreaterThan,
+    LessThan,
+    Contains
+}
+
+public record IfNodeParams(
+    object? LeftValue = null,
+    IfComparisonOperator Operator = IfComparisonOperator.Equals,
+    object? RightValue = null
+);
+
+public class IfNode(string id, string name, IfNodeParams parameters) : WorkflowNode<IfNodeParams>(id, name, parameters)
+{
+    public override Task<object?> Execute()
     {
         Console.WriteLine("Node-if started");
-        return Task.CompletedTask;
+        return Task.FromResult<object?>(null);
     }
     
 }

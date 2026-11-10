@@ -1,24 +1,23 @@
 namespace C7N.Engine.Nodes;
 
+public record SetNodeParams(
+    Dictionary<string, object> input,
+    Dictionary<string, object> values
+    );
+
 public class SetNode(
     string id,
     string name,
-    Dictionary<string, object> parameters
-) : WorkflowNode(id, name, "set", parameters)
+    SetNodeParams parameters
+) : WorkflowNode<SetNodeParams>(id, name, parameters)
 {
-    public override Task<object> Execute()
+    public override Task<object?> Execute()
     {
         Console.WriteLine("Node-Set started");
 
-        if (Parameters["input"] is not Dictionary<string, object> input ||
-            Parameters["values"] is not Dictionary<string, object> values)
-        {
-            throw new InvalidOperationException("Missing or invalid input/values parameters.");
-        }
+        var output = DeepMerge(Parameters.input, Parameters.values);
 
-        var output = DeepMerge(input, values);
-
-        return Task.FromResult<object>(output);
+        return Task.FromResult<object?>(output);
     }
 
     private static Dictionary<string, object> DeepMerge(

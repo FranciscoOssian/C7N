@@ -1,8 +1,14 @@
 using C7N.Engine;
+using C7N.Engine.Registry;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.AllowOutOfOrderMetadataProperties = true;
+});
 
 var app = builder.Build();
 
@@ -35,6 +41,12 @@ app.MapGet("/workflows/{id}", (string id) =>
     return workflow is null
         ? Results.NotFound()
         : Results.Ok(workflow);
+});
+
+app.MapGet("/workflows/nodes", () =>
+{
+    NodeRegistry nodes = new();
+    return  Results.Ok(nodes.GetAvailableNodes());
 });
 
 app.Run();

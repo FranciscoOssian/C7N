@@ -6,13 +6,15 @@ using System.Text.Json.Serialization;
 [JsonDerivedType(typeof(HttpRequestNode), "http")]
 [JsonDerivedType(typeof(IfNode), "if")]
 [JsonDerivedType(typeof(SetNode), "set")]
-[JsonDerivedType(typeof(ManualTriggerNode), "manualTriggerNode")]
-public abstract class WorkflowNode(string id, string name, string type, Dictionary<string, object> parameters)
+[JsonDerivedType(typeof(ManualTriggerNode), "manual-trigger")]
+public abstract class WorkflowNode(string id, string name)
 {
     public string Id { get; init; } = id;
     public string Name { get; set; } = name;
+    public abstract Task<object?> Execute();
+}
 
-    public abstract Task Execute();
-
-    public Dictionary<string, object> Parameters { get; init; } = parameters;
+public abstract class WorkflowNode<TParameters>(string id, string name, TParameters parameters): WorkflowNode(id, name)
+{
+    public TParameters Parameters { get; init; } = parameters;
 }

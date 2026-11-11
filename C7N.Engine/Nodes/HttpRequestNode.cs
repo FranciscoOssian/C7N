@@ -1,14 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-namespace C7N.Engine.Nodes;
-using System.Net.Http;
+using C7N.Engine.Resolvers;
 
-public class HttpRequestOutput
-{
-    public int StatusCode { get; set; }
-    public Dictionary<string, string[]> Headers { get; set; } = [];
-    public string Body { get; set; } = string.Empty;
-}
+namespace C7N.Engine.Nodes;
 
 [JsonConverter(typeof(JsonStringEnumConverter))] 
 public enum HttpsRequestMethods
@@ -33,20 +27,28 @@ public record HttpsRequestNodeParams(
 public class HttpRequestNode(string id, string name, HttpsRequestNodeParams parameters) : WorkflowNode<HttpsRequestNodeParams>(id, name, parameters)
 {
     private static readonly HttpClient Client = new();
-    public override async Task<object?> Execute()
+    public override async Task<object?> Execute(Dictionary<string, object?>? input)
     {
         Console.WriteLine("Node-HttpReq started");
         
-        var response = await Client.GetAsync(parameters.Url);
-        response.EnsureSuccessStatusCode();
-        var output = new HttpRequestOutput
+        var response = await Client.GetAsync(TemplateResolver.Resolve(Parameters.Url, input)?.ToString());
+        var rawBody = await response.Content.ReadAsStringAsync();
+        object? parsedBody = rawBody;
+        
+        try
         {
-            StatusCode = (int)response.StatusCode,
-            Headers = response.Headers.ToDictionary(
-                h => h.Key,
-                h => h.Value.ToArray()),
-            Body = await response.Content.ReadAsStringAsync()
+            using var doc = JsonDocument.Parse(rawBody);
+            parsedBody = doc.RootElement.Clone();
+        }
+        catch (JsonException) {}
+
+        var output = new Dictionary<string, object?>
+        {
+            ["statusCode"] = (int)response.StatusCode,
+            ["headers"] = response.Headers.ToDictionary(h => h.Key, h => (object?)h.Value.ToArray()),
+            ["body"] = parsedBody
         };
+
         Console.WriteLine(JsonSerializer.Serialize(output));
         return output;
     }

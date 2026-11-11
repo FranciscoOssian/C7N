@@ -20,10 +20,9 @@ public record IfNodeParams(
 
 public class IfNode(string id, string name, IfNodeParams parameters) : WorkflowNode<IfNodeParams>(id, name, parameters)
 {
-    public override Task<object?> Execute()
+    public override Task<object?> Execute(Dictionary<string, object?>? input)
     {
         Console.WriteLine("Node-if started");
         return Task.FromResult<object?>(null);
     }
-    
 }

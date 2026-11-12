@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 /// </summary>
 public static class TemplateResolver
 {
-    private static readonly Regex PlaceholderRegex = new(@"\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}", RegexOptions.Compiled);
+    private static readonly Regex PlaceholderRegex = new(@"\<\<\s*([a-zA-Z0-9_.]+)\s*\>\>", RegexOptions.Compiled);
 
     /// <summary>
     /// Resolves placeholders inside the provided value against the root data dictionary.
@@ -31,16 +31,16 @@ public static class TemplateResolver
             return string.Empty;
         }
 
-        if (root is null || root.Count == 0 || !template.Contains("{{"))
+        if (root is null || root.Count == 0 || !template.Contains("<<"))
         {
             return template;
         }
 
         var trimmed = template.Trim();
 
-        if (trimmed.StartsWith("{{") && trimmed.EndsWith("}}") && Regex.Count(trimmed, Regex.Escape("{{")) == 1)
+        if (trimmed.StartsWith("<<") && trimmed.EndsWith(">>") && Regex.Count(trimmed, Regex.Escape("<<")) == 1)
         {
-            var path = trimmed.Replace("{{", "").Replace("}}", "").Trim();
+            var path = trimmed.Replace("<<", "").Replace(">>", "").Trim();
             return GetValueByPath(root, path);
         }
 

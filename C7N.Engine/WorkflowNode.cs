@@ -1,12 +1,14 @@
+using System.Reflection;
+
 namespace C7N.Engine;
 using C7N.Engine.Nodes;
 using System.Text.Json.Serialization;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
-[JsonDerivedType(typeof(HttpRequestNode), "http")]
-[JsonDerivedType(typeof(IfNode), "if")]
-[JsonDerivedType(typeof(SetNode), "set")]
-[JsonDerivedType(typeof(ManualTriggerNode), "manual-trigger")]
+[JsonDerivedType(typeof(HttpRequestNode), nameof(HttpRequestNode))]
+[JsonDerivedType(typeof(IfNode), nameof(IfNode))]
+[JsonDerivedType(typeof(SetNode), nameof(SetNode))]
+[JsonDerivedType(typeof(ManualTriggerNode), nameof(ManualTriggerNode))]
 public abstract class WorkflowNode(string id, string name)
 {
     public string Id { get; init; } = id;

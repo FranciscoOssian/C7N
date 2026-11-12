@@ -43,6 +43,22 @@ app.MapGet("/workflows/{id}", (string id) =>
         : Results.Ok(workflow);
 });
 
+app.MapPost("/workflows/{id}/execute", async (string id) =>
+{
+    var workflow = workflows.SingleOrDefault(w => w.Id == id);
+
+    if (workflow is null)
+    {
+        return Results.NotFound();
+    }
+
+    WorkflowExecution executor = new(workflow);
+
+    var results = await executor.Execute();
+
+    return Results.Ok(results);
+});
+
 app.MapGet("/workflows/nodes", () =>
 {
     NodeRegistry nodes = new();

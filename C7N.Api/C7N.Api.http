@@ -1,6 +1,55 @@
-@C7N.Api_HostAddress = http://localhost:5195
+POST http://localhost:5000/workflows
+Content-Type: application/json
 
-GET {{C7N.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+{
+  "id": "workflow-posts-user",
+  "name": "Busca Post e depois busca Usuario",
+  "nodes": [
+    {
+      "id": "trigger-001",
+      "name": "Iniciar Manualmente",
+      "type": "ManualTriggerNode",
+      "parameters": {}
+    },
+    {
+      "id": "http-001",
+      "name": "Buscar Post 1",
+      "type": "HttpRequestNode",
+      "parameters": {
+        "url": "https://jsonplaceholder.typicode.com/posts/1",
+        "method": "GET"
+      }
+    },
+    {
+      "id": "http-002",
+      "name": "Buscar Autor do Post",
+      "type": "HttpRequestNode",
+      "parameters": {
+        "url": "https://jsonplaceholder.typicode.com/users/<< body.userId >>",
+        "method": "GET"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "sourceNodeId": "trigger-001",
+      "sourceOutputId": "main",
+      "targetNodeId": "http-001",
+      "targetInputId": "main"
+    },
+    {
+      "sourceNodeId": "http-001",
+      "sourceOutputId": "main",
+      "targetNodeId": "http-002",
+      "targetInputId": "main"
+    }
+  ]
+}
 
 ###
+
+POST http://localhost:5000/workflows/workflow-posts-user/execute
+
+###
+
+GET http://localhost:5000/workflows/nodes

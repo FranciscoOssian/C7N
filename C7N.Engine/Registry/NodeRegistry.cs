@@ -1,3 +1,4 @@
+using System.Text.Json;
 using C7N.Engine.Nodes;
 using C7N.Engine.Registry.Definitions;
 
@@ -29,7 +30,7 @@ public class NodeRegistry
 
             foreach (var prop in properties)
             {
-                string fieldName = prop.Name;
+                string fieldName = JsonNamingPolicy.CamelCase.ConvertName(prop.Name);
                 string fieldType = "string";
                 List<string>? options = null;
                 
@@ -64,7 +65,7 @@ public class NodeRegistry
                 ));
             }
             
-            string nodeTypeIdentifier = nodeType.Name.Replace("Node", "").ToLower();
+            string nodeTypeIdentifier = nodeType.Name;
 
             definitions.Add(new NodeDefinition(
                 Type: nodeTypeIdentifier,

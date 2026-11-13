@@ -1,4 +1,4 @@
-namespace C7N.Engine;
+namespace C7N.Engine.Workflows;
 
 public class Workflow
 {

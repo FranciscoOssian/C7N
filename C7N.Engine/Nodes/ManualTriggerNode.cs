@@ -1,4 +1,5 @@
 namespace C7N.Engine.Nodes;
+using C7N.Engine.Workflows;
 
 public record ManualTriggerNodeParams();
 

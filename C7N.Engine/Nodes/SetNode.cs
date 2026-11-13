@@ -1,6 +1,7 @@
 namespace C7N.Engine.Nodes;
 
 using C7N.Engine.Resolvers;
+using C7N.Engine.Workflows;
 
 /// <summary>
 /// Represents the parameters for configuring a SetNode operation.

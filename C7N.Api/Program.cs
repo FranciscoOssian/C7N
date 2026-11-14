@@ -1,5 +1,6 @@
 using C7N.Engine.Registry;
 using C7N.Engine.Workflows;
+using C7N.Engine.Execution;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,8 +62,8 @@ app.MapPost("/workflows/{id}/execute", async (string id) =>
 
 app.MapGet("/workflows/nodes", () =>
 {
-    NodeRegistry nodes = new();
-    return  Results.Ok(nodes.GetAvailableNodes());
+    NodeRegistry registry = new();
+    return  Results.Ok(registry.GetAvailableNodes());
 });
 
 app.Run();

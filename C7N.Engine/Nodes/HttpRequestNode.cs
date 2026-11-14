@@ -25,7 +25,7 @@ public record HttpsRequestNodeParams(
     int Retries = 0
 );
 
-public class HttpRequestNode(string id, string name, HttpsRequestNodeParams parameters) : WorkflowNode<HttpsRequestNodeParams>(id, name, parameters)
+public class HttpRequestNode(string id, string name, HttpsRequestNodeParams parameters) : Node<HttpsRequestNodeParams>(id, name, parameters)
 {
     private static readonly HttpClient Client = new();
     public override async Task<object?> Execute(Dictionary<string, object?>? input)

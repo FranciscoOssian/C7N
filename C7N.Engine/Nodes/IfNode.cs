@@ -19,7 +19,7 @@ public record IfNodeParams(
     object? RightValue = null
 );
 
-public class IfNode(string id, string name, IfNodeParams parameters) : WorkflowNode<IfNodeParams>(id, name, parameters)
+public class IfNode(string id, string name, IfNodeParams parameters) : Node<IfNodeParams>(id, name, parameters)
 {
     public override Task<object?> Execute(Dictionary<string, object?>? input)
     {

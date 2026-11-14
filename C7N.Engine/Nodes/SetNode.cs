@@ -18,7 +18,7 @@ public class SetNode(
     string id,
     string name,
     SetNodeParams parameters
-) : WorkflowNode<SetNodeParams>(id, name, parameters)
+) : Node<SetNodeParams>(id, name, parameters)
 {
     /// <summary>
     /// Executes the node operation by merging parameters into the provided input payload.

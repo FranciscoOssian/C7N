@@ -10,6 +10,41 @@ public static class TemplateResolver
 {
     private static readonly Regex PlaceholderRegex = new(@"\<\<\s*([a-zA-Z0-9_.]+)\s*\>\>", RegexOptions.Compiled);
 
+    public static bool CanResolve(Dictionary<string, object?> values, Dictionary<string, object?> root)
+    {
+        Queue<Dictionary<string, object?>> toSearch = new();
+        toSearch.Enqueue(values);
+        while (toSearch.TryDequeue(out var current))
+        {
+            foreach (var (key, value) in current)
+            {
+                var unpacked = value is JsonElement el ? UnpackJsonElement(el) : value;
+
+                if (unpacked is string v)
+                {
+                    if (PlaceholderRegex.IsMatch(v))
+                    {
+                        foreach (Match match in PlaceholderRegex.Matches(v))
+                        {
+                            string path = match.Groups[1].Value;
+                            if (GetValueByPath(root, path) is null)
+                                return false;
+                        }
+                    }
+                }
+                else if (unpacked is Dictionary<string, object?> dict)
+                {
+                    toSearch.Enqueue(dict);
+                }
+                else if (unpacked is JsonElement obj && obj.ValueKind == JsonValueKind.Object)
+                {
+                    toSearch.Enqueue(obj.EnumerateObject().ToDictionary(p => p.Name, p => (object?)p.Value));
+                }
+            }
+        }
+        return true;
+    }
+
     /// <summary>
     /// Resolves placeholders inside the provided value against the root data dictionary.
     /// Non-string values are returned unchanged.
@@ -21,6 +56,11 @@ public static class TemplateResolver
     /// <returns>The resolved value or the original value if no resolution was required.</returns>
     public static object? Resolve(object? value, Dictionary<string, object?>? root)
     {
+        if (value is JsonElement jsonElement)
+        {
+            value = UnpackJsonElement(jsonElement);
+        }
+
         if (value is not string template)
         {
             return value;
@@ -96,17 +136,22 @@ public static class TemplateResolver
 
         if (current is JsonElement finalElement)
         {
-            return finalElement.ValueKind switch
-            {
-                JsonValueKind.True => true,
-                JsonValueKind.False => false,
-                JsonValueKind.Number => finalElement.TryGetInt32(out var n) ? n : finalElement.GetDouble(),
-                JsonValueKind.String => finalElement.GetString(),
-                JsonValueKind.Null or JsonValueKind.Undefined => null,
-                _ => finalElement
-            };
+            return UnpackJsonElement(finalElement);
         }
 
         return current;
+    }
+
+    private static object? UnpackJsonElement(JsonElement element)
+    {
+        return element.ValueKind switch
+        {
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Number => element.TryGetInt32(out var n) ? n : element.GetDouble(),
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Null or JsonValueKind.Undefined => null,
+            _ => element
+        };
     }
 }

@@ -10,6 +10,7 @@ public class NodeExecution
 {
     public Node Node { get; }
     public NodeExecutionStatus Status { get; set; }
+    public string? Error { get; set; }
 
     private readonly ConcurrentQueue<Dictionary<string, object?>?>? _queueForEveryToken;
     private readonly ConcurrentDictionary<string, object?>? _dictionaryForWaitAll;

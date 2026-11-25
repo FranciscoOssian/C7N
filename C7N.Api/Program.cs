@@ -37,7 +37,7 @@ app.MapGet("/workflows/{id}", (string id) =>
 app.MapGet("/executions/{id}", (string id) =>
 {
     if(!executions.TryGetValue(id, out var execution)) return Results.NotFound();
-    return Results.Ok(execution);
+    return Results.Ok(execution.GetWorkflowSnapshot());
 });
 
 app.MapPost("/workflows/{id}/execute", (string id) =>

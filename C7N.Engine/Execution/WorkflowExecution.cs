@@ -1,3 +1,4 @@
+using System.Threading.Channels;
 using System.Collections.Concurrent;
 using C7N.Engine.Connections;
 using C7N.Engine.Nodes;
@@ -14,6 +15,7 @@ public class WorkflowExecution
     private readonly ILookup<string, string> _parentsOf;
     private readonly Dictionary<string, NodeExecution> _nodesExecutionById;
     private readonly List<(NodeExecution Node, Task<NodeOutput> Task)> _nodeTasks;
+    private readonly ConcurrentDictionary<Guid, ChannelWriter<ExecutionEvent>> _subscribers;
 
     public WorkflowExecution(Workflow workflow)
     {
@@ -24,6 +26,7 @@ public class WorkflowExecution
         _nodesExecutionById = workflow.Nodes.Select(n => new NodeExecution(n)).ToDictionary(n => n.Node.Id);
         _nodeTasks = new();
         Results = new();
+        _subscribers = new();
     }
 
     public WorkflowExecutionSnapshot GetWorkflowSnapshot()
@@ -38,6 +41,37 @@ public class WorkflowExecution
         );
 
         return new WorkflowExecutionSnapshot(Id, Status, nodes);
+    }
+    
+    public (Guid SubscriptionId, ChannelReader<ExecutionEvent> Reader) Subscribe()
+    {
+        var channel = Channel.CreateUnbounded<ExecutionEvent>();
+        var id = Guid.NewGuid();
+        _subscribers[id] = channel.Writer;
+
+        if (Status is NodeExecutionStatus.Completed or NodeExecutionStatus.Failed)
+        {
+            _subscribers.TryRemove(id, out _);
+            channel.Writer.TryComplete();
+        }
+
+        return (id, channel.Reader);
+    }
+
+    public void Unsubscribe(Guid subscriptionId)
+    {
+        if (_subscribers.TryRemove(subscriptionId, out var writer))
+        {
+            writer.TryComplete();
+        }
+    }
+
+    private void Publish(ExecutionEvent evt)
+    {
+        foreach (var writer in _subscribers.Values)
+        {
+            writer.TryWrite(evt);
+        }
     }
 
     private bool IsNodeReadyToExecute(string nodeId)
@@ -58,14 +92,27 @@ public class WorkflowExecution
         try
         {
             Status = NodeExecutionStatus.Running;
+            Publish(new ExecutionEvent(ExecutionEventType.WorkflowRunning, new WorkflowEventPayload(Status)));
+
             await ExecuteInternal();
+
             Status = NodeExecutionStatus.Completed;
+            Publish(new ExecutionEvent(ExecutionEventType.WorkflowCompleted, new WorkflowEventPayload(Status)));
         }
         catch (Exception e)
         {
             Status = NodeExecutionStatus.Failed;
+            Publish(new ExecutionEvent(ExecutionEventType.WorkflowFailed, new WorkflowEventPayload(Status, e.Message)));
             Console.WriteLine(e);
             return null;
+        }
+        finally
+        {
+            foreach (var writer in _subscribers.Values)
+            {
+                writer.TryComplete();
+            }
+            _subscribers.Clear();
         }
 
         return Id;
@@ -75,6 +122,13 @@ public class WorkflowExecution
     {
         nodeExecution.Status = NodeExecutionStatus.Running;
         nodeExecution.Error = null;
+        Publish(new ExecutionEvent(
+            ExecutionEventType.NodeRunning,
+            new NodeEventPayload(
+                nodeExecution.Node.Id,
+                new NodeExecutionSnapshot(NodeExecutionStatus.Running)
+            )
+        ));
         _nodeTasks.Add((nodeExecution, task));
     }
 
@@ -105,11 +159,25 @@ public class WorkflowExecution
             {
                 executedNode.Status = NodeExecutionStatus.Failed;
                 executedNode.Error = ex.Message;
+                Publish(new ExecutionEvent(
+                    ExecutionEventType.NodeFailed,
+                    new NodeEventPayload(
+                        executedNode.Node.Id,
+                        new NodeExecutionSnapshot(NodeExecutionStatus.Failed, Error: ex.Message)
+                    )
+                ));
                 throw;
             }
 
             executedNode.Status = NodeExecutionStatus.Completed;
             Results[executedNode.Node.Id] = response.Data;
+            Publish(new ExecutionEvent(
+                ExecutionEventType.NodeCompleted,
+                new NodeEventPayload(
+                    executedNode.Node.Id,
+                    new NodeExecutionSnapshot(NodeExecutionStatus.Completed, Data: response.Data)
+                )
+            ));
             var resp = response.Data ?? [];
 
             if (executedNode.Node.ExecutionPolicy == NodeExecutionPolicy.EveryToken

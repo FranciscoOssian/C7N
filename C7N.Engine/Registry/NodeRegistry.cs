@@ -31,31 +31,31 @@ public class NodeRegistry
             foreach (var prop in properties)
             {
                 string fieldName = JsonNamingPolicy.CamelCase.ConvertName(prop.Name);
-                string fieldType = "string";
+                ParameterFieldType fieldType = ParameterFieldType.String;
                 List<string>? options = null;
-                
+
                 Type actualType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
 
                 if (actualType == typeof(int) || actualType == typeof(double) || actualType == typeof(float))
                 {
-                    fieldType = "number";
+                    fieldType = ParameterFieldType.Number;
                 }
                 else if (actualType == typeof(bool))
                 {
-                    fieldType = "boolean";
+                    fieldType = ParameterFieldType.Boolean;
                 }
                 else if (actualType.IsEnum)
                 {
-                    fieldType = "options";
+                    fieldType = ParameterFieldType.Options;
                     options = Enum.GetNames(actualType).ToList();
                 }
                 else if (typeof(System.Collections.IDictionary).IsAssignableFrom(actualType))
                 {
-                    fieldType = "json";
+                    fieldType = ParameterFieldType.Json;
                 }
                 else
                 {
-                    fieldType = "string";
+                    fieldType = ParameterFieldType.String;
                 }
 
                 parameterDefinitions.Add(new ParameterDefinition(
@@ -66,10 +66,12 @@ public class NodeRegistry
             }
             
             string nodeTypeIdentifier = nodeType.Name;
+            List<string> outPuts = nodeType == typeof(IfNode) ? ["true", "false"] : ["main"];
 
             definitions.Add(new NodeDefinition(
                 Type: nodeTypeIdentifier,
-                Parameters: parameterDefinitions
+                Parameters: parameterDefinitions,
+                Outputs:  outPuts
             ));
         }
 

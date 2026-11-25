@@ -23,12 +23,11 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-app.UseHttpsRedirection();
 app.UseCors();
+if (app.Environment.IsDevelopment())
+    app.MapOpenApi();
+else
+    app.UseHttpsRedirection();
 
 var workflows = new ConcurrentDictionary<string, Workflow>();
 var executions = new ConcurrentDictionary<string, WorkflowExecution>();

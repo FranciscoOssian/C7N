@@ -5,10 +5,10 @@ public record ManualTriggerNodeParams();
 
 public class ManualTriggerNode(string id, string name, ManualTriggerNodeParams parameters) : Node<ManualTriggerNodeParams>(id, name, parameters)
 {
-    public override Task<object?> Execute(Dictionary<string, object?>? input)
+    public override Task<NodeOutput> Execute(Dictionary<string, object?>? input)
     {
         Console.WriteLine("Workflow started");
-        return Task.FromResult<object?>(null);
+        return Task.FromResult<NodeOutput>(new NodeOutput(){OutputChannel = "main", Data = null});
     }
     
 }

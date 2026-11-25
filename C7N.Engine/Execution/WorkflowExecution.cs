@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using C7N.Engine.Connections;
 using C7N.Engine.Nodes;
 using C7N.Engine.Workflows;
 
@@ -5,19 +7,23 @@ namespace C7N.Engine.Execution;
 
 public class WorkflowExecution
 {
-    public string Id;
-    private readonly ILookup<string, string> _childrenOf;
+    public string Id { get; }
+    public NodeExecutionStatus Status { get; private set; }
+    public ConcurrentDictionary<string, object?> Results { get; }
+    private readonly ILookup<string, Connection> _childrenOf;
     private readonly ILookup<string, string> _parentsOf;
     private readonly Dictionary<string, NodeExecution> _nodesExecutionById;
-    private readonly List<(NodeExecution Node, Task<object?> Task)> _nodeTasks;
+    private readonly List<(NodeExecution Node, Task<NodeOutput> Task)> _nodeTasks;
 
     public WorkflowExecution(Workflow workflow)
     {
         Id = Guid.NewGuid().ToString();
-        _childrenOf = workflow.Connections.ToLookup(c => c.SourceNodeId, c => c.TargetNodeId);
+        Status = NodeExecutionStatus.Pending;
+        _childrenOf = workflow.Connections.ToLookup(c => c.SourceNodeId);
         _parentsOf = workflow.Connections.ToLookup(c => c.TargetNodeId, c => c.SourceNodeId);
         _nodesExecutionById = workflow.Nodes.Select(n => new NodeExecution(n)).ToDictionary(n => n.Node.Id);
         _nodeTasks = new();
+        Results = new();
     }
 
     private bool IsNodeReadyToExecute(string nodeId)
@@ -35,9 +41,27 @@ public class WorkflowExecution
 
     public async Task<string?> Execute()
     {
+        try
+        {
+            Status = NodeExecutionStatus.Running;
+            await ExecuteInternal();
+            Status = NodeExecutionStatus.Completed;
+        }
+        catch (Exception e)
+        {
+            Status = NodeExecutionStatus.Failed;
+            Console.WriteLine(e);
+            return null;
+        }
+
+        return Id;
+    }
+
+    private async Task<string?> ExecuteInternal()
+    {
         if (_nodesExecutionById.Values
                 .FirstOrDefault(e => e.Node is ManualTriggerNode)
-            is not { } starter) return null;
+            is not { } starter) throw new InvalidOperationException("Workflow has no StarterNode.");
 
         _nodeTasks.Add((starter, starter.Node.Execute(null)));
 
@@ -52,7 +76,8 @@ public class WorkflowExecution
             _nodeTasks.Remove(entry);
 
             var response = await executedTask;
-            var resp = response as Dictionary<string, object?> ?? [];
+            Results[executedNode.Node.Id] = response.Data;
+            var resp = response.Data ?? [];
 
             if (executedNode.Node.ExecutionPolicy == NodeExecutionPolicy.EveryToken
                 && IsNodeReadyToExecute(executedNode.Node.Id))
@@ -60,8 +85,10 @@ public class WorkflowExecution
                 _nodeTasks.Add((executedNode, executedNode.Execute()));
             }
 
-            foreach (var childId in _childrenOf[executedNode.Node.Id])
+            foreach (var conn in _childrenOf[executedNode.Node.Id])
             {
+                if (conn.SourceOutputId != response.OutputChannel) continue;
+                var childId = conn.TargetNodeId;
                 var child = _nodesExecutionById[childId];
                 child.StoreTokens(executedNode.Node.Id, [resp]);
 

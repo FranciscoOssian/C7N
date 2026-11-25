@@ -22,7 +22,7 @@ public abstract class Node(string id, string name)
     public string Id { get; init; } = id;
     public string Name { get; set; } = name;
     public NodeExecutionPolicy ExecutionPolicy { get; set; } = NodeExecutionPolicy.OnDemand;
-    public abstract Task<object?> Execute(Dictionary<string, object?>? input);
+    public abstract Task<NodeOutput> Execute(Dictionary<string, object?>? input);
 }
 
 public abstract class Node<TParameters>(string id, string name, TParameters parameters): Node(id, name)

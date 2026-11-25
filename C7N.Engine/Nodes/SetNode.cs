@@ -25,14 +25,14 @@ public class SetNode(
     /// </summary>
     /// <param name="input">The incoming dictionary from previous execution steps.</param>
     /// <returns>A task containing the merged and resolved output dictionary.</returns>
-    public override Task<object?> Execute(Dictionary<string, object?>? input)
+    public override Task<NodeOutput> Execute(Dictionary<string, object?>? input)
     {
         Console.WriteLine("Node-Set started");
         
         var safeInput = input ?? [];
         var output = DeepMerge(safeInput, Parameters.values, safeInput);
 
-        return Task.FromResult<object?>(output);
+        return Task.FromResult<NodeOutput>(new NodeOutput(){Data = output, OutputChannel = "main"});
     }
 
     /// <summary>

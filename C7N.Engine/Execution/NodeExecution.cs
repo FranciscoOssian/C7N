@@ -28,14 +28,14 @@ public class NodeExecution
             _dictionaryForWaitAll = new ConcurrentDictionary<string, object?>();
     }
 
-    public async Task<object?> Execute()
+    public async Task<NodeOutput> Execute()
     {
         if (Node.ExecutionPolicy is NodeExecutionPolicy.EveryToken)
         {
             if (_queueForEveryToken?.TryDequeue(out var token) ?? false)
                 return await Node.Execute(token);
 
-            return null;
+            return new NodeOutput();
         }
 
         if (Node.ExecutionPolicy is NodeExecutionPolicy.OnDemand)
@@ -65,7 +65,7 @@ public class NodeExecution
             return await Node.Execute(input);
         }
 
-        return null;
+        return new NodeOutput();
     }
 
     public void StoreTokens(string senderId, List<Dictionary<string, object?>> tokens)
